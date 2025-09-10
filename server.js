@@ -35,8 +35,11 @@ mongoose.connect(MONGODB_URI, {
     console.log('Connected to MongoDB');
 }).catch(err => {
     console.error('MongoDB connection error:', err);
-    // Don't exit the process, let the app run without database for now
-    console.log('Running without database connection...');
+    console.log('Running in demo mode without database...');
+    
+    // Create mock data for demo when database is unavailable
+    global.demoMode = true;
+    console.log('Demo mode enabled - using mock data');
 });
 
 // Product Schema
@@ -199,6 +202,40 @@ app.post('/api/admin/login', async (req, res) => {
 // Product Routes
 app.get('/api/products', async (req, res) => {
     try {
+        if (global.demoMode) {
+            // Return mock data when database is unavailable
+            const mockProducts = [
+                {
+                    id: 'demo1',
+                    name: 'Air Max 270',
+                    brand: 'Nike',
+                    price: 1999,
+                    originalPrice: 8999,
+                    image: 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/skwgyqrbfzhu6uyeh0gg/air-max-270-mens-shoes-KkLcGR.png',
+                    badge: 'BESTSELLER',
+                    description: 'Premium Nike Air Max 270 with maximum comfort and style',
+                    sizes: ['7', '8', '9', '10', '11'],
+                    colors: ['Black', 'White', 'Blue'],
+                    featured: true
+                },
+                {
+                    id: 'demo2',
+                    name: 'Air Force 1',
+                    brand: 'Nike',
+                    price: 1999,
+                    originalPrice: 7999,
+                    image: 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/b7d9211c-26e7-431a-ac24-b0540fb3c00f/air-force-1-07-mens-shoes-jBrhbr.png',
+                    badge: 'NEW',
+                    description: 'Classic Nike Air Force 1 - timeless design',
+                    sizes: ['7', '8', '9', '10', '11'],
+                    colors: ['White', 'Black'],
+                    featured: true
+                }
+            ];
+            res.json({ success: true, products: mockProducts });
+            return;
+        }
+        
         const { brand, featured, category } = req.query;
         let filter = {};
         
