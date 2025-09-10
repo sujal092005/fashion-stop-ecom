@@ -24,10 +24,19 @@ app.get('/', (req, res) => {
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fashionstop';
-mongoose.connect(MONGODB_URI).then(() => {
+
+// MongoDB connection with better error handling for production
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+}).then(() => {
     console.log('Connected to MongoDB');
 }).catch(err => {
     console.error('MongoDB connection error:', err);
+    // Don't exit the process, let the app run without database for now
+    console.log('Running without database connection...');
 });
 
 // Product Schema
