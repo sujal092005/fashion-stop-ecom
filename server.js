@@ -252,6 +252,10 @@ app.get('/api/products', async (req, res) => {
 
 app.post('/api/admin/products', async (req, res) => {
     try {
+        if (global.demoMode) {
+            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            return;
+        }
         const productData = req.body;
         const product = new Product(productData);
         await product.save();
@@ -263,6 +267,10 @@ app.post('/api/admin/products', async (req, res) => {
 
 app.put('/api/admin/products/:id', async (req, res) => {
     try {
+        if (global.demoMode) {
+            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            return;
+        }
         const product = await Product.findOneAndUpdate(
             { id: req.params.id },
             req.body,
@@ -355,6 +363,27 @@ app.post('/api/orders', async (req, res) => {
 
 app.get('/api/admin/orders', async (req, res) => {
     try {
+        if (global.demoMode) {
+            // Return mock orders for demo
+            const mockOrders = [
+                {
+                    id: 'ORD001',
+                    customerName: 'Demo Customer',
+                    email: 'demo@example.com',
+                    phone: '+91 9876543210',
+                    address: '123 Demo Street',
+                    city: 'Demo City',
+                    pincode: '123456',
+                    total: 1999,
+                    status: 'pending',
+                    createdAt: new Date(),
+                    items: [{ name: 'Air Max 270', quantity: 1, price: 1999 }]
+                }
+            ];
+            res.json({ success: true, orders: mockOrders });
+            return;
+        }
+        
         const orders = await Order.find().sort({ createdAt: -1 }).limit(50);
         const formattedOrders = orders.map(order => ({
             id: order.orderId,
