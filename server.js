@@ -10,26 +10,40 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // MongoDB Connection - Force local connection for development
-const MONGODB_URI = 'mongodb://localhost:27017/fashionstop';
-
-// Connect to MongoDB
+// MongoDB connection
 const connectDB = async () => {
     try {
-        await mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 10000,
-            socketTimeoutMS: 45000,
+        await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         });
-        console.log('✅ MongoDB connected successfully');
-        return true;
-    } catch (error) {
-        console.error('❌ MongoDB connection failed:', error.message);
-        console.error('❌ Server cannot start without MongoDB connection');
-        //process.exit(1);
+        console.log("✅ Connected to MongoDB Atlas");
+    } catch (err) {
+        console.error("❌ MongoDB connection error:", err.message);
+        throw err;
     }
 };
 
-// Initialize database connection
-//connectDB();
+
+// Connect to MongoDB
+const startServer = async () => {
+    try {
+        await connectDB(); // will throw if connection fails
+        await initializeAdmin();
+        await initializeProducts();
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            console.log(`Visit: http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('❌ Startup failed:', err.message);
+        process.exit(1);
+    }
+};
+
+startServer();
+
 
 // Middleware
 app.use(cors({
