@@ -19,20 +19,26 @@ global.demoMode = false;
 const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+            bufferMaxEntries: 0 // Disable mongoose buffering
         });
         console.log('✅ MongoDB connected successfully');
         global.demoMode = false;
+        return true;
     } catch (error) {
         console.error('❌ MongoDB connection failed:', error.message);
         console.log('🔄 Running in Demo Mode with file storage');
         global.demoMode = true;
+        return false;
     }
 };
 
 // Initialize database connection
-connectDB();
+let dbConnected = false;
+connectDB().then(connected => {
+    dbConnected = connected;
+});
 
 // Middleware
 app.use(cors({
@@ -223,9 +229,18 @@ const Admin = mongoose.model('Admin', adminSchema);
 
 // Initialize default admin user
 const initializeAdmin = async () => {
+    if (global.demoMode) {
+        console.log('Skipping admin initialization - running in demo mode');
+        return;
+    }
+    
     try {
-        // First, remove any existing admin users to avoid conflicts
-        await Admin.deleteMany({});
+        // Check if admin already exists
+        const existingAdmin = await Admin.findOne({ username: 'sujal' });
+        if (existingAdmin) {
+            console.log('Default admin already exists: sujal/pass123');
+            return;
+        }
         
         // Create the new admin user
         const defaultAdmin = new Admin({
@@ -235,15 +250,26 @@ const initializeAdmin = async () => {
         await defaultAdmin.save();
         console.log('Default admin user created: sujal/pass123');
     } catch (error) {
-        console.error('Error initializing admin:', error);
+        console.error('Error initializing admin:', error.message);
+        console.log('Switching to demo mode due to database error');
+        global.demoMode = true;
     }
 };
 
 // Initialize default products
 const initializeProducts = async () => {
+    if (global.demoMode) {
+        console.log('Skipping product initialization - running in demo mode');
+        return;
+    }
+    
     try {
-        // Always clear and reinitialize products for testing
-        await Product.deleteMany({});
+        // Check if products already exist
+        const existingProducts = await Product.countDocuments();
+        if (existingProducts > 0) {
+            console.log(`${existingProducts} products already exist in database`);
+            return;
+        }
         
         const defaultProducts = [
             {
@@ -299,7 +325,9 @@ const initializeProducts = async () => {
         await Product.insertMany(defaultProducts);
         console.log(`${defaultProducts.length} default products initialized`);
     } catch (error) {
-        console.error('Error initializing products:', error);
+        console.error('Error initializing products:', error.message);
+        console.log('Switching to demo mode due to database error');
+        global.demoMode = true;
     }
 };
 
@@ -678,9 +706,13 @@ app.listen(PORT, async () => {
     console.log(`Visit: http://localhost:${PORT}`);
     console.log(`Admin Login: sujal/pass123`);
     
-    // Initialize default data only if not in demo mode
-    if (!global.demoMode) {
-        await initializeAdmin();
-        await initializeProducts();
-    }
+    // Wait a moment for database connection to establish
+    setTimeout(async () => {
+        if (!global.demoMode && dbConnected) {
+            await initializeAdmin();
+            await initializeProducts();
+        } else {
+            console.log('Using file storage - data already initialized');
+        }
+    }, 1000);
 });
