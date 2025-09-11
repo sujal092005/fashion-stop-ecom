@@ -7,8 +7,12 @@ let demoProducts = []; // Store demo mode products locally
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     updateCartCount();
-    loadProducts();
     setupEventListeners();
+    
+    // Force refresh products after a short delay to ensure server is ready
+    setTimeout(() => {
+        loadProducts();
+    }, 500);
 });
 
 // Setup event listeners
@@ -61,13 +65,19 @@ function setupEventListeners() {
 // Load products from API
 async function loadProducts() {
     try {
+        console.log('Loading products from API...');
         const response = await fetch('/api/products');
         const data = await response.json();
         
-        if (data.success) {
+        console.log('API Response:', data);
+        
+        if (data.success && data.products) {
+            console.log('Products loaded:', data.products.length);
             // Combine server products with demo products
             const allProducts = [...data.products, ...demoProducts];
             displayProducts(allProducts);
+        } else {
+            console.error('No products in API response');
         }
     } catch (error) {
         console.error('Error loading products:', error);
@@ -80,17 +90,43 @@ async function loadProducts() {
 
 // Display products in the UI
 function displayProducts(products) {
+    console.log('Displaying products:', products);
+    
     const newArrivalsContainer = document.getElementById('new-arrivals-products');
     
-    // Clear new arrivals and mark existing dynamic products for removal
-    if (newArrivalsContainer) newArrivalsContainer.innerHTML = '';
+    // Clear new arrivals completely
+    if (newArrivalsContainer) {
+        newArrivalsContainer.innerHTML = '';
+        console.log('Cleared new arrivals container');
+    }
     
-    // Remove previously added dynamic products (marked with data-dynamic attribute)
-    document.querySelectorAll('.product-card[data-dynamic="true"]').forEach(card => {
-        card.remove();
+    // Remove ALL previously added dynamic products (marked with data-dynamic attribute)
+    const dynamicProducts = document.querySelectorAll('.product-card[data-dynamic="true"]');
+    console.log('Removing', dynamicProducts.length, 'dynamic products');
+    dynamicProducts.forEach(card => card.remove());
+    
+    // Also remove hardcoded products that don't have data-dynamic attribute to avoid duplicates
+    // This ensures updated products from admin panel replace the hardcoded ones
+    const allProductCards = document.querySelectorAll('.product-card:not([data-dynamic])');
+    const productNames = products.map(p => p.name.toLowerCase());
+    
+    console.log('Checking', allProductCards.length, 'hardcoded products for duplicates');
+    allProductCards.forEach(card => {
+        const titleElement = card.querySelector('.product-title');
+        if (titleElement) {
+            const cardName = titleElement.textContent.toLowerCase();
+            // Remove hardcoded product if we have a dynamic version with same or similar name
+            if (productNames.some(name => name.includes(cardName) || cardName.includes(name))) {
+                console.log('Removing duplicate hardcoded product:', cardName);
+                card.remove();
+            }
+        }
     });
     
-    products.forEach(product => {
+    console.log('Adding', products.length, 'products to display');
+    products.forEach((product, index) => {
+        console.log(`Adding product ${index + 1}:`, product.name, product.brand);
+        
         const productCard = createProductCard(product);
         productCard.setAttribute('data-dynamic', 'true'); // Mark as dynamic product
         
@@ -99,6 +135,7 @@ function displayProducts(products) {
             const newArrivalCard = productCard.cloneNode(true);
             newArrivalCard.setAttribute('data-dynamic', 'true');
             newArrivalsContainer.appendChild(newArrivalCard);
+            console.log('Added to new arrivals:', product.name);
         }
         
         // Add to appropriate brand section
@@ -117,6 +154,7 @@ function displayProducts(products) {
                     (brandLower === 'adidas' && sectionBrand.includes('adidas')) ||
                     (brandLower === 'puma' && sectionBrand.includes('puma'))) {
                     brandContainer = section.querySelector('.products');
+                    console.log('Found brand container for:', product.brand);
                     break;
                 }
             }
@@ -135,16 +173,22 @@ function displayProducts(products) {
                 const productsContainer = document.querySelector('#products');
                 if (productsContainer) {
                     productsContainer.appendChild(brandSection);
+                    console.log('Created new brand section for:', product.brand);
                 }
             }
             brandContainer = brandSection ? brandSection.querySelector('.products') : null;
         }
         
-        // Append to brand container (don't replace existing products)
+        // Append to brand container
         if (brandContainer) {
             brandContainer.appendChild(productCard);
+            console.log('Added product to brand container:', product.name);
+        } else {
+            console.error('No brand container found for product:', product.name);
         }
     });
+    
+    console.log('Product display complete');
 }
 
 // Create brand section
