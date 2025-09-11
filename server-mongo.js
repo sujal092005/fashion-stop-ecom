@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const { nanoid } = require('nanoid');
@@ -8,31 +7,6 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fashionstop';
-
-// Global demo mode flag
-global.demoMode = false;
-
-// Connect to MongoDB
-const connectDB = async () => {
-    try {
-        await mongoose.connect(MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('✅ MongoDB connected successfully');
-        global.demoMode = false;
-    } catch (error) {
-        console.error('❌ MongoDB connection failed:', error.message);
-        console.log('🔄 Running in Demo Mode with file storage');
-        global.demoMode = true;
-    }
-};
-
-// Initialize database connection
-connectDB();
 
 // Middleware
 app.use(cors({
@@ -167,7 +141,7 @@ const writeJsonFile = (filePath, data) => {
     }
 };
 
-// MongoDB Schemas (only used when database is available)
+// Product Schema
 const productSchema = new mongoose.Schema({
     id: { type: String, unique: true, default: () => nanoid() },
     name: { type: String, required: true },
@@ -303,7 +277,10 @@ const initializeProducts = async () => {
     }
 };
 
-// API Routes
+// Routes
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Admin Authentication
 app.post('/api/admin/login', async (req, res) => {
@@ -311,16 +288,14 @@ app.post('/api/admin/login', async (req, res) => {
         const { username, password } = req.body;
         
         if (global.demoMode) {
-            // Demo mode fallback - use file storage
-            const admins = readJsonFile(ADMINS_FILE);
-            const admin = admins.find(a => a.username === username && a.password === password);
-            
-            if (admin) {
-                res.json({ success: true, message: 'Login successful (Demo Mode)', admin: { username: admin.username, role: admin.role } });
+            // Demo mode fallback - allow default admin login
+            if (username === 'sujal' && password === 'pass123') {
+                res.json({ success: true, message: 'Login successful (Demo Mode)', admin: { username: 'sujal', role: 'admin' } });
+                return;
             } else {
                 res.status(401).json({ success: false, message: 'Invalid credentials (Demo Mode)' });
+                return;
             }
-            return;
         }
         
         const admin = await Admin.findOne({ username, password });
@@ -339,28 +314,36 @@ app.post('/api/admin/login', async (req, res) => {
 app.get('/api/products', async (req, res) => {
     try {
         if (global.demoMode) {
-            // Use file storage when database is unavailable
-            const products = readJsonFile(PRODUCTS_FILE);
-            const { brand, featured, category } = req.query;
-            
-            let filteredProducts = products;
-            if (brand) {
-                filteredProducts = filteredProducts.filter(p => 
-                    p.brand.toLowerCase().includes(brand.toLowerCase())
-                );
-            }
-            if (featured) {
-                filteredProducts = filteredProducts.filter(p => 
-                    p.featured === (featured === 'true')
-                );
-            }
-            if (category) {
-                filteredProducts = filteredProducts.filter(p => 
-                    p.category === category
-                );
-            }
-            
-            res.json({ success: true, products: filteredProducts });
+            // Return mock data when database is unavailable
+            const mockProducts = [
+                {
+                    id: 'demo1',
+                    name: 'Air Max 270',
+                    brand: 'Nike',
+                    price: 1999,
+                    originalPrice: 8999,
+                    image: 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/skwgyqrbfzhu6uyeh0gg/air-max-270-mens-shoes-KkLcGR.png',
+                    badge: 'BESTSELLER',
+                    description: 'Premium Nike Air Max 270 with maximum comfort and style',
+                    sizes: ['7', '8', '9', '10', '11'],
+                    colors: ['Black', 'White', 'Blue'],
+                    featured: true
+                },
+                {
+                    id: 'demo2',
+                    name: 'Air Force 1',
+                    brand: 'Nike',
+                    price: 1999,
+                    originalPrice: 7999,
+                    image: 'https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/b7d9211c-26e7-431a-ac24-b0540fb3c00f/air-force-1-07-mens-shoes-jBrhbr.png',
+                    badge: 'NEW',
+                    description: 'Classic Nike Air Force 1 - timeless design',
+                    sizes: ['7', '8', '9', '10', '11'],
+                    colors: ['White', 'Black'],
+                    featured: true
+                }
+            ];
+            res.json({ success: true, products: mockProducts });
             return;
         }
         
@@ -381,19 +364,15 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/admin/products', async (req, res) => {
     try {
         if (global.demoMode) {
-            // Use file storage in demo mode
-            const products = readJsonFile(PRODUCTS_FILE);
-            const newProduct = {
-                id: nanoid(),
+            // In demo mode, simulate successful product addition
+            const mockProduct = {
+                id: 'demo' + Date.now(),
                 ...req.body,
-                createdAt: new Date().toISOString()
+                createdAt: new Date()
             };
-            products.push(newProduct);
-            writeJsonFile(PRODUCTS_FILE, products);
-            res.json({ success: true, message: 'Product added successfully (Demo Mode)', product: newProduct });
+            res.json({ success: true, message: 'Product added successfully (Demo Mode)', product: mockProduct });
             return;
         }
-        
         const productData = req.body;
         const product = new Product(productData);
         await product.save();
@@ -479,10 +458,9 @@ app.delete('/api/admin/products/:id', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
     try {
         if (global.demoMode) {
-            // Use file storage in demo mode
-            const orders = readJsonFile(ORDERS_FILE);
-            const newOrder = {
-                orderId: 'ORD-' + nanoid(8),
+            // Demo mode - simulate order placement
+            const demoOrder = {
+                id: 'ORD' + Date.now(),
                 customerName: req.body.customerName,
                 email: req.body.email,
                 phone: req.body.phone,
@@ -490,27 +468,9 @@ app.post('/api/orders', async (req, res) => {
                 city: req.body.city,
                 pincode: req.body.pincode,
                 items: req.body.items,
-                totalAmount: req.body.total,
-                status: 'pending',
-                paymentMethod: 'cod',
-                createdAt: new Date().toISOString()
+                total: req.body.total
             };
-            orders.push(newOrder);
-            writeJsonFile(ORDERS_FILE, orders);
-            
-            const responseOrder = {
-                id: newOrder.orderId,
-                customerName: newOrder.customerName,
-                email: newOrder.email,
-                phone: newOrder.phone,
-                address: newOrder.address,
-                city: newOrder.city,
-                pincode: newOrder.pincode,
-                items: newOrder.items,
-                total: newOrder.totalAmount
-            };
-            
-            res.json({ success: true, message: 'Order placed successfully (Demo Mode)', order: responseOrder });
+            res.json({ success: true, message: 'Order placed successfully (Demo Mode)', order: demoOrder });
             return;
         }
         
@@ -550,23 +510,23 @@ app.post('/api/orders', async (req, res) => {
 app.get('/api/admin/orders', async (req, res) => {
     try {
         if (global.demoMode) {
-            // Use file storage in demo mode
-            const orders = readJsonFile(ORDERS_FILE);
-            const formattedOrders = orders.map(order => ({
-                id: order.orderId,
-                customerName: order.customerName,
-                email: order.email,
-                phone: order.phone,
-                address: order.address,
-                city: order.city,
-                pincode: order.pincode,
-                total: order.totalAmount,
-                status: order.status,
-                createdAt: order.createdAt,
-                items: order.items
-            })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50);
-            
-            res.json({ success: true, orders: formattedOrders });
+            // Return mock orders for demo
+            const mockOrders = [
+                {
+                    id: 'ORD001',
+                    customerName: 'Demo Customer',
+                    email: 'demo@example.com',
+                    phone: '+91 9876543210',
+                    address: '123 Demo Street',
+                    city: 'Demo City',
+                    pincode: '123456',
+                    total: 1999,
+                    status: 'pending',
+                    createdAt: new Date(),
+                    items: [{ name: 'Air Max 270', quantity: 1, price: 1999 }]
+                }
+            ];
+            res.json({ success: true, orders: mockOrders });
             return;
         }
         

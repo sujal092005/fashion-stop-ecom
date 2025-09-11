@@ -1,0 +1,97 @@
+[
+  {
+    "id": "bbn3HIOhRHmWJd5MobeYH",
+    "name": "Air Max 270",
+    "brand": "Nike",
+    "price": 1999,
+    "originalPrice": 8999,
+    "image": "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/skwgyqrbfzhu6uyeh0gg/air-max-270-mens-shoes-KkLcGR.png",
+    "badge": "BESTSELLER",
+    "description": "Premium Nike Air Max 270 with maximum comfort and style",
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "featured": true,
+    "createdAt": "2025-09-11T04:58:39.023Z"
+  },
+  {
+    "id": "C45M0Mh9-dlaXRK02fKtp",
+    "name": "Air Force 1",
+    "brand": "Nike",
+    "price": 1999,
+    "originalPrice": 7999,
+    "image": "https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/b7d9211c-26e7-431a-ac24-b0540fb3c00f/air-force-1-07-mens-shoes-jBrhbr.png",
+    "badge": "NEW",
+    "description": "Classic Nike Air Force 1 - timeless design",
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "colors": [
+      "White",
+      "Black"
+    ],
+    "featured": true,
+    "createdAt": "2025-09-11T04:58:39.028Z"
+  },
+  {
+    "id": "BHvKW610-kU12Wwhf_hDt",
+    "name": "Ultraboost 22",
+    "brand": "Adidas",
+    "price": 2499,
+    "originalPrice": 9999,
+    "image": "https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/fbaf991a78bc4896a3e9ad7800abcec6_9366/Ultraboost_22_Shoes_Black_GZ0127_01_standard.jpg",
+    "badge": "HOT",
+    "description": "Adidas Ultraboost 22 - Ultimate energy return",
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "colors": [
+      "Black",
+      "White",
+      "Blue"
+    ],
+    "featured": true,
+    "createdAt": "2025-09-11T04:58:39.028Z"
+  },
+  {
+    "id": "Fbsutt3IbcFniZzD0-XJf",
+    "name": "Suede Classic",
+    "brand": "Puma",
+    "price": 1799,
+    "originalPrice": 6999,
+    "image": "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/374915/25/sv01/fnd/IND/fmt/png/Suede-Classic-XXI-Sneakers",
+    "badge": "CLASSIC",
+    "description": "Puma Suede Classic - Timeless street style",
+    "sizes": [
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "colors": [
+      "Red",
+      "Blue",
+      "Black"
+    ],
+    "featured": false,
+    "createdAt": "2025-09-11T04:58:39.028Z"
+  }
+]
