@@ -103,20 +103,23 @@ const Admin = mongoose.model('Admin', adminSchema);
 // Initialize default admin user
 const initializeAdmin = async () => {
     try {
+        const adminUsername = process.env.ADMIN_USERNAME || 'sujal';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'pass123';
+        
         // Check if admin already exists
-        const existingAdmin = await Admin.findOne({ username: 'sujal' });
+        const existingAdmin = await Admin.findOne({ username: adminUsername });
         if (existingAdmin) {
-            console.log('Default admin already exists: sujal/pass123');
+            console.log(`Default admin already exists: ${adminUsername}/${adminPassword}`);
             return;
         }
         
         // Create the new admin user
         const defaultAdmin = new Admin({
-            username: 'sujal',
-            password: 'pass123'
+            username: adminUsername,
+            password: adminPassword
         });
         await defaultAdmin.save();
-        console.log('Default admin user created: sujal/pass123');
+        console.log(`Default admin user created: ${adminUsername}/${adminPassword}`);
     } catch (error) {
         console.error('Error initializing admin:', error.message);
         throw error;
