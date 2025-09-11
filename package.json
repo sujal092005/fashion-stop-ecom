@@ -1,15 +1,21 @@
 {
-  "name": "fs-1",
+  "name": "fashion-stop-ecommerce",
   "version": "1.0.0",
-  "description": "",
+  "description": "Fashion Stop - Premium e-commerce platform for branded shoes",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "echo 'No build step required'",
+    "test": "echo 'No tests specified'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["ecommerce", "fashion", "shoes", "nodejs", "express", "mongodb"],
+  "author": "Sujal Dudhe <dudhesujal604@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
   "type": "commonjs",
   "dependencies": {
     "body-parser": "^2.2.0",

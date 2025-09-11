@@ -1,15 +1,17 @@
 services:
   - type: web
-    name: fashion-stop
+    name: fashion-stop-ecommerce
     env: node
     plan: free
     buildCommand: npm install
     startCommand: node server.js
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
         fromDatabase:
+          sync: false
           name: fashion-stop-db
           property: connectionString
 

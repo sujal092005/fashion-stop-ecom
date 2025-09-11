@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'file://'],
+    origin: true, // Allow all origins for simplicity in production
     credentials: true
 }));
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -187,6 +187,18 @@ app.get('/', (req, res) => {
 app.post('/api/admin/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        
+        if (global.demoMode) {
+            // Demo mode fallback - allow default admin login
+            if (username === 'sujal' && password === 'pass123') {
+                res.json({ success: true, message: 'Login successful (Demo Mode)', admin: { username: 'sujal', role: 'admin' } });
+                return;
+            } else {
+                res.status(401).json({ success: false, message: 'Invalid credentials (Demo Mode)' });
+                return;
+            }
+        }
+        
         const admin = await Admin.findOne({ username, password });
         
         if (admin) {
@@ -289,6 +301,11 @@ app.put('/api/admin/products/:id', async (req, res) => {
 
 app.delete('/api/admin/products/:id', async (req, res) => {
     try {
+        if (global.demoMode) {
+            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            return;
+        }
+        
         console.log('Attempting to delete product with ID:', req.params.id);
         
         // First try to find the product to see what we're working with
@@ -328,6 +345,23 @@ app.delete('/api/admin/products/:id', async (req, res) => {
 // Order Routes
 app.post('/api/orders', async (req, res) => {
     try {
+        if (global.demoMode) {
+            // Demo mode - simulate order placement
+            const demoOrder = {
+                id: 'ORD' + Date.now(),
+                customerName: req.body.customerName,
+                email: req.body.email,
+                phone: req.body.phone,
+                address: req.body.address,
+                city: req.body.city,
+                pincode: req.body.pincode,
+                items: req.body.items,
+                total: req.body.total
+            };
+            res.json({ success: true, message: 'Order placed successfully (Demo Mode)', order: demoOrder });
+            return;
+        }
+        
         const orderData = {
             customerName: req.body.customerName,
             email: req.body.email,
