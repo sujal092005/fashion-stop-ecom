@@ -440,6 +440,11 @@ app.get('/api/admin/orders', async (req, res) => {
 
 app.put('/api/admin/orders/:orderId', async (req, res) => {
     try {
+        if (global.demoMode) {
+            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            return;
+        }
+        
         const { status } = req.body;
         const order = await Order.findOneAndUpdate(
             { orderId: req.params.orderId },
@@ -459,6 +464,20 @@ app.put('/api/admin/orders/:orderId', async (req, res) => {
 
 app.get('/api/admin/stats', async (req, res) => {
     try {
+        if (global.demoMode) {
+            // Demo mode stats
+            res.json({
+                success: true,
+                stats: {
+                    totalProducts: 2,
+                    totalOrders: 1,
+                    pendingOrders: 1,
+                    totalRevenue: 1999
+                }
+            });
+            return;
+        }
+        
         const totalProducts = await Product.countDocuments();
         const totalOrders = await Order.countDocuments();
         const pendingOrders = await Order.countDocuments({ status: 'pending' });
@@ -481,15 +500,29 @@ app.get('/api/admin/stats', async (req, res) => {
     }
 });
 
-const startServer = async () => {
-    await initializeAdmin();
-    await initializeProducts();
-    
-    app.listen(PORT, () => {
-        console.log(`Fashion Stop E-commerce Server running on port ${PORT}`);
-        console.log(`Visit: http://localhost:${PORT}`);
-        console.log('Admin Login: sujal/pass123');
-    });
-};
+// Add health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
-startServer();
+// Add API status endpoint
+app.get('/api/status', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        demoMode: global.demoMode || false,
+        timestamp: new Date().toISOString() 
+    });
+});
+
+// Start server and initialize data
+app.listen(PORT, async () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Visit: http://localhost:${PORT}`);
+    console.log(`Admin Login: sujal/pass123`);
+    
+    // Initialize default data only if not in demo mode
+    if (!global.demoMode) {
+        await initializeAdmin();
+        await initializeProducts();
+    }
+});
