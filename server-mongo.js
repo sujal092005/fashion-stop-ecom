@@ -33,7 +33,7 @@ const initFileStorage = () => {
     if (!fs.existsSync(DATA_DIR)) {
         fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    
+
     // Initialize default data files
     if (!fs.existsSync(PRODUCTS_FILE)) {
         const defaultProducts = [
@@ -96,11 +96,11 @@ const initFileStorage = () => {
         ];
         fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(defaultProducts, null, 2));
     }
-    
+
     if (!fs.existsSync(ORDERS_FILE)) {
         fs.writeFileSync(ORDERS_FILE, JSON.stringify([], null, 2));
     }
-    
+
     if (!fs.existsSync(ADMINS_FILE)) {
         const defaultAdmin = [{
             id: nanoid(),
@@ -111,7 +111,7 @@ const initFileStorage = () => {
         }];
         fs.writeFileSync(ADMINS_FILE, JSON.stringify(defaultAdmin, null, 2));
     }
-    
+
     console.log('File storage initialized successfully');
 };
 
@@ -196,29 +196,27 @@ const Order = mongoose.model('Order', orderSchema);
 const Admin = mongoose.model('Admin', adminSchema);
 
 // Initialize default admin user
-const initializeAdmin = async () => {
+async function initializeAdmin() {
     try {
-        // First, remove any existing admin users to avoid conflicts
-        await Admin.deleteMany({});
-        
-        // Create the new admin user
-        const defaultAdmin = new Admin({
-            username: 'sujal',
-            password: 'pass123'
-        });
-        await defaultAdmin.save();
-        console.log('Default admin user created: sujal/pass123');
-    } catch (error) {
-        console.error('Error initializing admin:', error);
+        const exists = await Admin.findOne({ username: "admin" });
+        if (!exists) {
+            await Admin.create({ username: "admin", password: "admin" });
+            console.log("✅ Default admin created");
+        } else {
+            console.log("ℹ️ Admin already exists, skipping creation");
+        }
+    } catch (err) {
+        console.error("❌ Error initializing admin:", err.message);
     }
-};
+}
+
 
 // Initialize default products
 const initializeProducts = async () => {
     try {
         // Always clear and reinitialize products for testing
         await Product.deleteMany({});
-        
+
         const defaultProducts = [
             {
                 name: 'Air Max 270',
@@ -286,7 +284,7 @@ app.get('/', (req, res) => {
 app.post('/api/admin/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        
+
         if (global.demoMode) {
             // Demo mode fallback - allow default admin login
             if (username === 'sujal' && password === 'pass123') {
@@ -297,9 +295,9 @@ app.post('/api/admin/login', async (req, res) => {
                 return;
             }
         }
-        
+
         const admin = await Admin.findOne({ username, password });
-        
+
         if (admin) {
             res.json({ success: true, message: 'Login successful', admin: { username: admin.username, role: admin.role } });
         } else {
@@ -346,14 +344,14 @@ app.get('/api/products', async (req, res) => {
             res.json({ success: true, products: mockProducts });
             return;
         }
-        
+
         const { brand, featured, category } = req.query;
         let filter = {};
-        
+
         if (brand) filter.brand = new RegExp(brand, 'i');
         if (featured) filter.featured = featured === 'true';
         if (category) filter.category = category;
-        
+
         const products = await Product.find(filter).sort({ createdAt: -1 });
         res.json({ success: true, products });
     } catch (error) {
@@ -399,7 +397,7 @@ app.put('/api/admin/products/:id', async (req, res) => {
             req.body,
             { new: true }
         );
-        
+
         if (product) {
             res.json({ success: true, message: 'Product updated successfully', product });
         } else {
@@ -417,22 +415,22 @@ app.delete('/api/admin/products/:id', async (req, res) => {
             res.json({ success: true, message: 'Product deleted successfully (Demo Mode)' });
             return;
         }
-        
+
         console.log('Attempting to delete product with ID:', req.params.id);
-        
+
         // First try to find the product to see what we're working with
         let product = await Product.findOne({ id: req.params.id });
         if (!product) {
             product = await Product.findById(req.params.id);
         }
-        
+
         if (!product) {
             console.log('Product not found with ID:', req.params.id);
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
-        
+
         console.log('Found product to delete:', product.name, 'with ID:', product.id || product._id);
-        
+
         // Now delete using the same method we found it with
         let deletedProduct;
         if (product.id) {
@@ -440,7 +438,7 @@ app.delete('/api/admin/products/:id', async (req, res) => {
         } else {
             deletedProduct = await Product.findByIdAndDelete(req.params.id);
         }
-        
+
         if (deletedProduct) {
             console.log('Product deleted successfully:', deletedProduct.name);
             res.json({ success: true, message: 'Product deleted successfully' });
@@ -473,7 +471,7 @@ app.post('/api/orders', async (req, res) => {
             res.json({ success: true, message: 'Order placed successfully (Demo Mode)', order: demoOrder });
             return;
         }
-        
+
         const orderData = {
             customerName: req.body.customerName,
             email: req.body.email,
@@ -484,10 +482,10 @@ app.post('/api/orders', async (req, res) => {
             items: req.body.items,
             totalAmount: req.body.total
         };
-        
+
         const order = new Order(orderData);
         await order.save();
-        
+
         // Return order with the generated orderId
         const responseOrder = {
             id: order.orderId,
@@ -500,7 +498,7 @@ app.post('/api/orders', async (req, res) => {
             items: order.items,
             total: order.totalAmount
         };
-        
+
         res.json({ success: true, message: 'Order placed successfully', order: responseOrder });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error placing order', error: error.message });
@@ -529,7 +527,7 @@ app.get('/api/admin/orders', async (req, res) => {
             res.json({ success: true, orders: mockOrders });
             return;
         }
-        
+
         const orders = await Order.find().sort({ createdAt: -1 }).limit(50);
         const formattedOrders = orders.map(order => ({
             id: order.orderId,
@@ -562,14 +560,14 @@ app.put('/api/admin/orders/:orderId', async (req, res) => {
             res.json({ success: true, message: 'Order status updated successfully (Demo Mode)', order: mockOrder });
             return;
         }
-        
+
         const { status } = req.body;
         const order = await Order.findOneAndUpdate(
             { orderId: req.params.orderId },
             { status },
             { new: true }
         );
-        
+
         if (order) {
             res.json({ success: true, message: 'Order status updated successfully', order });
         } else {
@@ -595,7 +593,7 @@ app.get('/api/admin/stats', async (req, res) => {
             });
             return;
         }
-        
+
         const totalProducts = await Product.countDocuments();
         const totalOrders = await Order.countDocuments();
         const pendingOrders = await Order.countDocuments({ status: 'pending' });
@@ -603,7 +601,7 @@ app.get('/api/admin/stats', async (req, res) => {
             { $match: { status: { $ne: 'cancelled' } } },
             { $group: { _id: null, total: { $sum: '$totalAmount' } } }
         ]);
-        
+
         res.json({
             success: true,
             stats: {
@@ -625,10 +623,10 @@ app.get('/health', (req, res) => {
 
 // Add API status endpoint
 app.get('/api/status', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         demoMode: global.demoMode || false,
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -637,7 +635,7 @@ app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Visit: http://localhost:${PORT}`);
     console.log(`Admin Login: sujal/pass123`);
-    
+
     // Initialize default data only if not in demo mode
     if (!global.demoMode) {
         await initializeAdmin();
