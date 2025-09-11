@@ -265,7 +265,13 @@ app.get('/api/products', async (req, res) => {
 app.post('/api/admin/products', async (req, res) => {
     try {
         if (global.demoMode) {
-            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            // In demo mode, simulate successful product addition
+            const mockProduct = {
+                id: 'demo' + Date.now(),
+                ...req.body,
+                createdAt: new Date()
+            };
+            res.json({ success: true, message: 'Product added successfully (Demo Mode)', product: mockProduct });
             return;
         }
         const productData = req.body;
@@ -280,7 +286,13 @@ app.post('/api/admin/products', async (req, res) => {
 app.put('/api/admin/products/:id', async (req, res) => {
     try {
         if (global.demoMode) {
-            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            // In demo mode, simulate successful product update
+            const mockProduct = {
+                id: req.params.id,
+                ...req.body,
+                updatedAt: new Date()
+            };
+            res.json({ success: true, message: 'Product updated successfully (Demo Mode)', product: mockProduct });
             return;
         }
         const product = await Product.findOneAndUpdate(
@@ -302,7 +314,8 @@ app.put('/api/admin/products/:id', async (req, res) => {
 app.delete('/api/admin/products/:id', async (req, res) => {
     try {
         if (global.demoMode) {
-            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            // In demo mode, simulate successful product deletion
+            res.json({ success: true, message: 'Product deleted successfully (Demo Mode)' });
             return;
         }
         
@@ -441,7 +454,13 @@ app.get('/api/admin/orders', async (req, res) => {
 app.put('/api/admin/orders/:orderId', async (req, res) => {
     try {
         if (global.demoMode) {
-            res.json({ success: false, message: 'Demo mode - database operations disabled' });
+            // In demo mode, simulate successful order status update
+            const mockOrder = {
+                id: req.params.orderId,
+                status: req.body.status,
+                updatedAt: new Date()
+            };
+            res.json({ success: true, message: 'Order status updated successfully (Demo Mode)', order: mockOrder });
             return;
         }
         
