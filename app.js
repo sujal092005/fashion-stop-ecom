@@ -2,6 +2,7 @@
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let isAdminLoggedIn = false;
 let currentAdmin = null;
+let demoProducts = []; // Store demo mode products locally
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -64,10 +65,16 @@ async function loadProducts() {
         const data = await response.json();
         
         if (data.success) {
-            displayProducts(data.products);
+            // Combine server products with demo products
+            const allProducts = [...data.products, ...demoProducts];
+            displayProducts(allProducts);
         }
     } catch (error) {
         console.error('Error loading products:', error);
+        // If server fails, show demo products only
+        if (demoProducts.length > 0) {
+            displayProducts(demoProducts);
+        }
     }
 }
 
@@ -498,10 +505,16 @@ async function loadAdminProducts() {
         const data = await response.json();
         
         if (data.success) {
-            displayAdminProducts(data.products);
+            // Combine server products with demo products
+            const allProducts = [...data.products, ...demoProducts];
+            displayAdminProducts(allProducts);
         }
     } catch (error) {
         console.error('Error loading admin products:', error);
+        // If server fails, show demo products only
+        if (demoProducts.length > 0) {
+            displayAdminProducts(demoProducts);
+        }
     }
 }
 
@@ -547,6 +560,18 @@ function displayAdminProducts(products) {
 window.handleDelete = function(productId) {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
+    // Check if it's a demo product first
+    const demoProductIndex = demoProducts.findIndex(p => p.id === productId);
+    if (demoProductIndex !== -1) {
+        // Remove from demo products array
+        demoProducts.splice(demoProductIndex, 1);
+        showNotification('Product deleted successfully!', 'success');
+        loadAdminProducts();
+        loadProducts();
+        return;
+    }
+    
+    // Otherwise, delete from server
     fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE'
     })
@@ -600,9 +625,27 @@ async function addProduct() {
             showNotification('Product added successfully!', 'success');
             document.getElementById('productForm').reset();
             
-            // Immediately refresh both admin and customer views
-            loadAdminProducts();
-            loadProducts();
+            // Check if we're in demo mode by looking at the response message
+            const isDemoMode = data.message && data.message.includes('Demo Mode');
+            
+            if (isDemoMode && data.product) {
+                // In demo mode, manually add the product to the frontend
+                console.log('Demo mode detected, adding product to frontend:', data.product);
+                
+                // Add to demo products array
+                demoProducts.push(data.product);
+                
+                // Add the product to the display immediately
+                const products = [data.product];
+                displayProducts(products);
+                
+                // Also update admin products list with demo products
+                displayAdminProducts(demoProducts);
+            } else {
+                // Normal mode - refresh from server
+                loadAdminProducts();
+                loadProducts();
+            }
         } else {
             showNotification('Error: ' + (data.message || 'Failed to add product'), 'error');
         }
