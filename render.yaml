@@ -9,11 +9,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: MONGODB_URI
-        fromDatabase:
-          sync: false
-          name: fashion-stop-db
-          property: connectionString
 
 databases:
   - name: fashion-stop-db

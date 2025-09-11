@@ -22,8 +22,13 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// MongoDB Connection
+// MongoDB Connection - Render automatically provides DATABASE_URL for PostgreSQL, but we need MONGODB_URI
 const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/fashionstop';
+
+// Log connection attempt for debugging
+console.log('Attempting MongoDB connection...');
+console.log('MONGODB_URI available:', !!process.env.MONGODB_URI);
+console.log('DATABASE_URL available:', !!process.env.DATABASE_URL);
 
 // MongoDB connection with better error handling for production
 mongoose.connect(MONGODB_URI, {
