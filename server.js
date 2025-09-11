@@ -9,8 +9,8 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fashionstop';
+// MongoDB Connection - Force local connection for development
+const MONGODB_URI = 'mongodb://localhost:27017/fashionstop';
 
 // Connect to MongoDB
 const connectDB = async () => {
