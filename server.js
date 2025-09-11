@@ -23,16 +23,16 @@ app.get('/', (req, res) => {
 });
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fashionstop';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.DATABASE_URL || 'mongodb://localhost:27017/fashionstop';
 
 // MongoDB connection with better error handling for production
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    serverSelectionTimeoutMS: 10000, // Increased timeout for Render
     socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
 }).then(() => {
-    console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB:', MONGODB_URI ? 'External DB' : 'Local DB');
 }).catch(err => {
     console.error('MongoDB connection error:', err);
     console.log('Running in demo mode without database...');
